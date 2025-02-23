@@ -28,7 +28,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import BaseNode from '@/components/nodes/BaseNode';
-import FirstNode from '@/components/nodes/FirstNode';
+import InitialSettingsNode from '@/components/nodes/InitialSettingsNode';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -37,28 +37,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { BaseBlock, ConditionBlock, FirstNodeData, InputBlock, MessageBlock, NodeData } from '@/types/BlockType';
+import { BaseBlock, ConditionBlock, InitialSettingsNode as InitialSettingsNodeType, InputBlock, MessageBlock, NodeData } from '@/types/BlockType';
 import { Editor } from '@monaco-editor/react';
 import '@xyflow/react/dist/style.css';
 import { Braces, Grid } from 'lucide-react';
-import schema from '../../schema.json';
-
-interface SchemaBlock {
-  key: string;
-  next?: string;
-  isFirst?: boolean;
-  type: "MESSAGE" | "INPUT" | "CONDITION";
-  message?: { contents: { value: string }[] };
-  input?: {
-    back?: { to: string };
-    regex: string;
-    variable: { key: string; type: string };
-    validator: "cpf" | "birthdate" | null;
-    conditions: { value: string; action: { type: string; value: string } }[];
-    regexDontMatchBlock: string;
-  };
-  conditions?: { next: string; condition: { key: { key: string; type: string }; type: string; value: string } }[];
-}
+import { SchemaJson } from '../types/Schema';
 
 const convertSchemaToEdges = (nodes: Node<NodeData>[]): Edge[] => {
   const edges: Edge[] = [];
@@ -114,68 +97,43 @@ const convertSchemaToEdges = (nodes: Node<NodeData>[]): Edge[] => {
 
 const convertSchemaToNodes = () => {
   const nodes: Node<NodeData>[] = [];
-  let yOffset = 0;
+  const xOffset = 0;
 
-  // Adiciona o nó inicial
-  const firstNode: Node<FirstNodeData> = {
+  // Adiciona o nó inicial com as configurações do SchemaJson
+  const firstNodeData: InitialSettingsNodeType = {
+    type: 'INITIAL_SETTINGS',
+    header: SchemaJson.header || { value: '' },
+    startTime: SchemaJson.startTime || '',
+    endTime: SchemaJson.endTime || '',
+    firstBlock: SchemaJson.firstBlock || '',
+    listPrefix: SchemaJson.listPrefix || '',
+    resetBlock: SchemaJson.resetBlock || '',
+    weekendBlock: SchemaJson.weekendBlock || '',
+    cancelMessage: SchemaJson.cancelMessage || '',
+    holidaysBlock: SchemaJson.holidaysBlock || '',
+    notFoundMessage: SchemaJson.notFoundMessage || { value: '' },
+    timeoutSettings: SchemaJson.timeoutSettings || {
+      block: '',
+      hours: 0,
+      minutes: 0
+    },
+    endProtocolBlock: SchemaJson.endProtocolBlock || '',
+    outOfServiceBlock: SchemaJson.outOfServiceBlock || '',
+    requestErrorBlock: SchemaJson.requestErrorBlock || '',
+    startProtocolBlock: SchemaJson.startProtocolBlock || '',
+    timeoutProtocolBlock: SchemaJson.timeoutProtocolBlock || '',
+    canceledProtocolBlock: SchemaJson.canceledProtocolBlock || '',
+    scheduleProtocolBlock: SchemaJson.scheduleProtocolBlock || null
+  };
+
+  const firstNode: Node<InitialSettingsNodeType> = {
     id: 'start',
     type: 'firstNode',
     dragHandle: '.custom-drag-handle',
-    position: { x: 500, y: yOffset },
-    data: {
-      key: 'Inicio',
-      type: 'FIRST'
-    },
+    position: { x: xOffset, y: 0 },
+    data: firstNodeData
   };
   nodes.push(firstNode as Node<NodeData>);
-
-  yOffset += 250;
-
-  schema.flows.forEach((flow) => {
-    (flow.blocks as unknown as SchemaBlock[]).forEach((block) => {
-      let content: MessageBlock | InputBlock | ConditionBlock;
-
-      if (block.type === 'MESSAGE' && block.message) {
-        content = {
-          message: {
-            contents: block.message.contents
-          }
-        };
-      } else if (block.type === 'INPUT' && block.input) {
-        content = {
-          input: {
-            back: block.input.back,
-            regex: block.input.regex,
-            variable: block.input.variable,
-            validator: block.input.validator,
-            conditions: block.input.conditions,
-            regexDontMatchBlock: block.input.regexDontMatchBlock
-          }
-        };
-      } else if (block.type === 'CONDITION' && block.conditions) {
-        content = {
-          conditions: block.conditions
-        };
-      } else {
-        return; // Skip invalid blocks
-      }
-
-      const node: Node<NodeData> = {
-        id: block.key,
-        type: 'baseNode',
-        dragHandle: '.custom-drag-handle',
-        position: { x: 500, y: yOffset },
-        data: {
-          key: block.key,
-          next: block.next || '',
-          type: block.type,
-          content
-        },
-      };
-      nodes.push(node);
-      yOffset += 250;
-    });
-  });
 
   return nodes;
 };
@@ -265,9 +223,9 @@ const FlowEditor: React.FC<FlowEditorProps> = ({
   const reactFlowInstance = useReactFlow();
 
   const getEdgeStyle = useCallback((edge: Edge) => ({
-    stroke: selectedEdge?.id === edge.id ? '#fff' : selectedNode && (edge.source === selectedNode.id || edge.target === selectedNode.id) ? '#2563eb' : '#4b5563',
+    stroke: selectedEdge?.id === edge.id ? '#fff' : selectedNode && (edge.source === selectedNode.id || edge.target === selectedNode.id) ? '#2563eb' : '#ffffff',
     strokeWidth: selectedEdge?.id === edge.id ? 3 : selectedNode && (edge.source === selectedNode.id || edge.target === selectedNode.id) ? 2 : 1,
-    opacity: selectedEdge && selectedEdge.id !== edge.id ? 0.2 : 1,
+    opacity: selectedEdge ? 0.2 : 1,
   }), [selectedNode, selectedEdge]);
 
   const getNodeStyle = useCallback((node: Node<NodeData>) => ({
@@ -427,30 +385,25 @@ export default function Home() {
         onUpdate={(updatedData) => handleNodeUpdate(props.id, updatedData)}
       />
     ),
-    firstNode: FirstNode,
+    firstNode: InitialSettingsNode,
   }), [handleNodeUpdate]);
 
   // Gera o JSON dos nodes
   const nodesJson = useMemo(() => {
+    const initialSettings = nodes.find(node => node.type === 'firstNode')?.data as InitialSettingsNodeType;
+
     const flows = [{
       key: "Flow",
       description: "Flow gerado",
       blocks: nodes
         .map(node => {
-          if (node.type === 'firstNode') {
-            const firstNode = node.data as FirstNodeData;
-            return {
-              key: firstNode.key,
-              next: firstNode.next || '',
-              type: 'FIRST'
-            };
-          }
           if (node.type === 'baseNode') {
             const baseNode = node.data as BaseBlock;
             const baseContent = {
               key: baseNode.key,
               next: baseNode.next || '',
-              type: baseNode.type
+              type: baseNode.type,
+              back: baseNode.back || { to: '' }
             };
 
             if (baseNode.type === 'MESSAGE') {
@@ -464,6 +417,7 @@ export default function Home() {
                 ...baseContent,
                 input: {
                   ...inputContent.input,
+                  back: inputContent.input.back || { to: '' },
                   conditions: inputContent.input.conditions.map(condition => ({
                     value: condition.value,
                     action: {
@@ -485,7 +439,31 @@ export default function Home() {
         .filter(Boolean)
     }];
 
-    return JSON.stringify({ flows }, null, 2);
+    return JSON.stringify({
+      flows,
+      header: { value: initialSettings?.header?.value || '' },
+      startTime: initialSettings?.startTime || '',
+      endTime: initialSettings?.endTime || '',
+      firstBlock: initialSettings?.firstBlock || '',
+      listPrefix: initialSettings?.listPrefix || '',
+      resetBlock: initialSettings?.resetBlock || '',
+      weekendBlock: initialSettings?.weekendBlock || '',
+      cancelMessage: initialSettings?.cancelMessage || '',
+      holidaysBlock: initialSettings?.holidaysBlock || '',
+      notFoundMessage: { value: initialSettings?.notFoundMessage?.value || '' },
+      timeoutSettings: {
+        block: initialSettings?.timeoutSettings?.block || '',
+        hours: initialSettings?.timeoutSettings?.hours || 0,
+        minutes: initialSettings?.timeoutSettings?.minutes || 0
+      },
+      endProtocolBlock: initialSettings?.endProtocolBlock || '',
+      outOfServiceBlock: initialSettings?.outOfServiceBlock || '',
+      requestErrorBlock: initialSettings?.requestErrorBlock || '',
+      startProtocolBlock: initialSettings?.startProtocolBlock || '',
+      timeoutProtocolBlock: initialSettings?.timeoutProtocolBlock || '',
+      canceledProtocolBlock: initialSettings?.canceledProtocolBlock || '',
+      scheduleProtocolBlock: initialSettings?.scheduleProtocolBlock || null
+    }, null, 2);
   }, [nodes]);
 
   // Salva os nodes quando houver mudanças
@@ -548,6 +526,16 @@ export default function Home() {
                           conditions: updatedConditions
                         }
                       }
+                    }
+                  };
+                }
+                // Se for uma edge do bloco anterior
+                if (deletedEdge.sourceHandle === '0') {
+                  return {
+                    ...node,
+                    data: {
+                      ...node.data,
+                      back: { to: '' }
                     }
                   };
                 }
@@ -617,6 +605,15 @@ export default function Home() {
                 }
               };
             }
+          } else if (params.sourceHandle === '0') {
+            // Se for o handle do bloco anterior
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                back: { to: params.target }
+              }
+            };
           } else {
             // Se for o handle padrão de "Próximo"
             return {
@@ -633,13 +630,6 @@ export default function Home() {
     }
   }, [setEdges, setNodes]);
 
-  const resetNodes = useCallback(() => {
-    const defaultNodes = convertSchemaToNodes();
-    setNodes(defaultNodes);
-    setEdges(convertSchemaToEdges(defaultNodes));
-    localStorage.removeItem(STORAGE_KEY);
-  }, [setNodes, setEdges]);
-
   const onReconnectStart = useCallback(() => {
     edgeReconnectSuccessful.current = false;
   }, []);
@@ -648,17 +638,29 @@ export default function Home() {
     edgeReconnectSuccessful.current = true;
     setEdges((els) => reconnectEdge(oldEdge, newConnection, els));
 
-    // Atualiza o 'next' do node de origem
+    // Atualiza o node de origem com base no handle usado
     if (newConnection.source && newConnection.target) {
       setNodes(nodes => nodes.map(node => {
         if (node.id === newConnection.source) {
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              next: newConnection.target
-            }
-          };
+          if (newConnection.sourceHandle === '0') {
+            // Se for o handle do bloco anterior
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                back: { to: newConnection.target }
+              }
+            };
+          } else {
+            // Se for o handle padrão de "Próximo"
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                next: newConnection.target
+              }
+            };
+          }
         }
         return node;
       }));
@@ -701,6 +703,16 @@ export default function Home() {
                     conditions: updatedConditions
                   }
                 }
+              }
+            };
+          }
+          // Se for uma edge do bloco anterior
+          if (edge.sourceHandle === '0') {
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                back: { to: '' }
               }
             };
           }

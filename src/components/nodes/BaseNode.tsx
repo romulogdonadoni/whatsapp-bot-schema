@@ -39,11 +39,17 @@ const colors = {
         variant: 'orange',
         header: 'bg-orange-600/20',
         body: ''
+    },
+    INITIAL_SETTINGS: {
+        border: 'border-yellow-500',
+        variant: 'yellow',
+        header: 'bg-yellow-600/20',
+        body: ''
     }
 };
 
 const BaseNode = ({ data, onUpdate }: BaseNodeProps) => {
-    const [selected, setSelected] = useState<"MESSAGE" | "INPUT" | "CONDITION" | "WEBHOOK">('MESSAGE');
+    const [selected, setSelected] = useState<"MESSAGE" | "INPUT" | "CONDITION" | "WEBHOOK" | "INITIAL_SETTINGS">('MESSAGE');
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const handleUpdate = (updatedData: BaseBlock) => {

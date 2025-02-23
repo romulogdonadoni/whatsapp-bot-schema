@@ -11,8 +11,6 @@ path.react-flow__edge-path:hover {
   stroke-width: 10;
 }
 
-
-
 @layer base {
   * {
     @apply border-border outline-ring/50;

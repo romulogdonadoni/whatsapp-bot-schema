@@ -1,17 +1,38 @@
 export interface BaseBlock extends Record<string, unknown> {
     key: string;
-    type: 'MESSAGE' | 'INPUT' | 'CONDITION' | 'WEBHOOK';
-    content: MessageBlock | InputBlock | ConditionBlock | WebhookContent;
+    type: 'MESSAGE' | 'INPUT' | 'CONDITION' | 'WEBHOOK' | 'INITIAL_SETTINGS';
+    content: MessageBlock | InputBlock | ConditionBlock | WebhookContent | InitialSettingsNode;
     next?: string;
+    back?: { to: string };
 }
 
-export interface FirstNodeData extends Record<string, unknown> {
-    key: string;
-    type: 'FIRST';
-    next?: string;
+export interface InitialSettingsNode extends Record<string, unknown> {
+    type: 'INITIAL_SETTINGS';
+    header: { value: string };
+    startTime: string;
+    endTime: string;
+    firstBlock: string;
+    listPrefix: string;
+    resetBlock: string;
+    weekendBlock: string;
+    cancelMessage: string;
+    holidaysBlock: string;
+    notFoundMessage: { value: string };
+    timeoutSettings: {
+        block: string;
+        hours: number;
+        minutes: number;
+    };
+    endProtocolBlock: string;
+    outOfServiceBlock: string;
+    requestErrorBlock: string;
+    startProtocolBlock: string;
+    timeoutProtocolBlock: string;
+    canceledProtocolBlock: string;
+    scheduleProtocolBlock: string | null;
 }
 
-export type NodeData = BaseBlock | FirstNodeData;
+export type NodeData = BaseBlock | InitialSettingsNode;
 
 export interface MessageBlock {
     message: {
@@ -23,9 +44,7 @@ export interface MessageBlock {
 
 export interface InputBlock {
     input: {
-        back?: {
-            to: string;
-        };
+        back?: { to: string };
         regex: string;
         variable: {
             key: string;
