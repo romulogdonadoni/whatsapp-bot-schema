@@ -1,13 +1,18 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Label } from '@/components/ui/label';
-import { BaseBlock, ConditionBlock, InputBlock, MessageBlock, WebhookContent } from '@/types/BlockType';
+import { ActionBlock, AlertStatusBlock, BaseBlock, ConditionBlock, DynamicMessageBlock, InputBlock, MessageBlock, ScheduleAlertBlock, TemplateBlock, WebhookContent } from '@/types/BlockType';
 import { Handle, Position } from '@xyflow/react';
 import { GripHorizontal, Pencil } from "lucide-react";
 import { useState } from 'react';
+import ActionNode from './ActionNode';
+import AlertStatusNode from './AlertStatusNode';
 import ConditionNode from './ConditionNode';
+import DynamicMessageNode from './DynamicMessageNode';
 import InputNode from './InputNode';
 import MessageModal from './MessageModal';
+import ScheduleAlertNode from './ScheduleAlertNode';
+import TemplateNode from './TemplateNode';
 import WebhookNode from './WebhookNode';
 
 interface BaseNodeProps {
@@ -38,6 +43,36 @@ const colors = {
         border: 'border-orange-500',
         variant: 'orange',
         header: 'bg-orange-600/20',
+        body: ''
+    },
+    ACTION: {
+        border: 'border-pink-500',
+        variant: 'pink',
+        header: 'bg-pink-600/20',
+        body: ''
+    },
+    DYNAMIC_MESSAGE: {
+        border: 'border-cyan-500',
+        variant: 'cyan',
+        header: 'bg-cyan-600/20',
+        body: ''
+    },
+    TEMPLATE: {
+        border: 'border-amber-500',
+        variant: 'amber',
+        header: 'bg-amber-600/20',
+        body: ''
+    },
+    SCHEDULE_ALERT: {
+        border: 'border-lime-500',
+        variant: 'lime',
+        header: 'bg-lime-600/20',
+        body: ''
+    },
+    ALERT_STATUS: {
+        border: 'border-rose-500',
+        variant: 'rose',
+        header: 'bg-rose-600/20',
         body: ''
     },
     INITIAL_SETTINGS: {
@@ -129,6 +164,41 @@ const BaseNode = ({ data, onUpdate }: BaseNodeProps) => {
                 {data.type === 'WEBHOOK' && (
                     <WebhookNode
                         data={data.content as WebhookContent}
+                        onChange={(updatedData) => handleUpdate({ ...data, content: updatedData })}
+                    />
+                )}
+
+                {data.type === 'ACTION' && (
+                    <ActionNode
+                        data={data.content as ActionBlock}
+                        onChange={(updatedData) => handleUpdate({ ...data, content: updatedData })}
+                    />
+                )}
+
+                {data.type === 'DYNAMIC_MESSAGE' && (
+                    <DynamicMessageNode
+                        data={data.content as DynamicMessageBlock}
+                        onChange={(updatedData) => handleUpdate({ ...data, content: updatedData })}
+                    />
+                )}
+
+                {data.type === 'TEMPLATE' && (
+                    <TemplateNode
+                        data={data.content as TemplateBlock}
+                        onChange={(updatedData) => handleUpdate({ ...data, content: updatedData })}
+                    />
+                )}
+
+                {data.type === 'SCHEDULE_ALERT' && (
+                    <ScheduleAlertNode
+                        data={data.content as ScheduleAlertBlock}
+                        onChange={(updatedData) => handleUpdate({ ...data, content: updatedData })}
+                    />
+                )}
+
+                {data.type === 'ALERT_STATUS' && (
+                    <AlertStatusNode
+                        data={data.content as AlertStatusBlock}
                         onChange={(updatedData) => handleUpdate({ ...data, content: updatedData })}
                     />
                 )}

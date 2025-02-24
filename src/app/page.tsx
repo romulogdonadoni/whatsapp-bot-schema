@@ -37,7 +37,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { BaseBlock, ConditionBlock, InitialSettingsNode as InitialSettingsNodeType, InputBlock, MessageBlock, NodeData } from '@/types/BlockType';
+import { ActionBlock, AlertStatusBlock, BaseBlock, ConditionBlock, DynamicMessageBlock, InitialSettingsNode as InitialSettingsNodeType, InputBlock, MessageBlock, NodeData, ScheduleAlertBlock, TemplateBlock, WebhookContent } from '@/types/BlockType';
 import { Editor } from '@monaco-editor/react';
 import '@xyflow/react/dist/style.css';
 import { Braces, Grid } from 'lucide-react';
@@ -345,7 +345,7 @@ const saveNodesToStorage = (nodes: Node<NodeData>[]) => {
 interface ContextMenuProps {
   position: { x: number; y: number };
   onClose: () => void;
-  onAddNode: (type: "MESSAGE" | "INPUT" | "CONDITION" | "WEBHOOK") => void;
+  onAddNode: (type: "MESSAGE" | "INPUT" | "CONDITION" | "WEBHOOK" | "ACTION" | "DYNAMIC_MESSAGE" | "TEMPLATE" | "SCHEDULE_ALERT" | "ALERT_STATUS") => void;
 }
 
 const ContextMenu: React.FC<ContextMenuProps> = ({ position, onClose, onAddNode }) => {
@@ -369,6 +369,26 @@ const ContextMenu: React.FC<ContextMenuProps> = ({ position, onClose, onAddNode 
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => onAddNode("WEBHOOK")}>
           Adicionar Webhook
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => onAddNode("ACTION")}>
+          Adicionar Ação
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => onAddNode("DYNAMIC_MESSAGE")}>
+          Adicionar Mensagem Dinâmica
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => onAddNode("TEMPLATE")}>
+          Adicionar Template
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => onAddNode("SCHEDULE_ALERT")}>
+          Adicionar Alerta Agendado
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => onAddNode("ALERT_STATUS")}>
+          Adicionar Status de Alerta
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -451,12 +471,11 @@ const FlowEditor: React.FC<FlowEditorProps> = ({
     setContextMenu(null);
   }, []);
 
-  const addNode = useCallback((type: "MESSAGE" | "INPUT" | "CONDITION" | "WEBHOOK") => {
+  const addNode = useCallback((type: "MESSAGE" | "INPUT" | "CONDITION" | "WEBHOOK" | "ACTION" | "DYNAMIC_MESSAGE" | "TEMPLATE" | "SCHEDULE_ALERT" | "ALERT_STATUS") => {
     const position = contextMenu
       ? reactFlowInstance.screenToFlowPosition({ x: contextMenu.x, y: contextMenu.y })
       : { x: 0, y: 0 };
 
-    // Cria um novo nó do tipo especificado
     const newNode: Node<NodeData> = {
       id: `node_${Date.now()}`,
       type: 'baseNode',
@@ -470,9 +489,19 @@ const FlowEditor: React.FC<FlowEditorProps> = ({
           ? { message: { contents: [{ value: '' }] } }
           : type === 'INPUT'
             ? { input: { regex: '', variable: { key: '', type: 'string' }, conditions: [], validator: null, regexDontMatchBlock: '' } }
-            : type === 'WEBHOOK'
-              ? { webhook: { url: '', type: 'GET', statuses: [] } }
-              : { conditions: [] }
+            : type === 'CONDITION'
+              ? { conditions: [] }
+              : type === 'WEBHOOK'
+                ? { webhook: { url: '', type: 'GET', statuses: [] } }
+                : type === 'ACTION'
+                  ? { action: { type: 'SET', next: '', value: '', variable: { key: '', type: 'MEMORY' } } }
+                  : type === 'DYNAMIC_MESSAGE'
+                    ? { dynamicMessage: { template: '', variables: [] } }
+                    : type === 'TEMPLATE'
+                      ? { template: { name: '', language: 'pt_BR', components: {} } }
+                      : type === 'SCHEDULE_ALERT'
+                        ? { scheduleAlert: { message: '', schedule: { date: '', time: '' } } }
+                        : { alertStatus: { status: 'PENDING', message: '' } }
       },
     };
 
@@ -662,6 +691,36 @@ export default function Home() {
             return {
               ...baseContent,
               conditions: (baseNode.content as ConditionBlock).conditions
+            };
+          } else if (baseNode.type === 'WEBHOOK') {
+            return {
+              ...baseContent,
+              webhook: (baseNode.content as WebhookContent).webhook
+            };
+          } else if (baseNode.type === 'ACTION') {
+            return {
+              ...baseContent,
+              action: (baseNode.content as ActionBlock).action
+            };
+          } else if (baseNode.type === 'DYNAMIC_MESSAGE') {
+            return {
+              ...baseContent,
+              dynamicMessage: (baseNode.content as DynamicMessageBlock).dynamicMessage
+            };
+          } else if (baseNode.type === 'TEMPLATE') {
+            return {
+              ...baseContent,
+              template: (baseNode.content as TemplateBlock).template
+            };
+          } else if (baseNode.type === 'SCHEDULE_ALERT') {
+            return {
+              ...baseContent,
+              scheduleAlert: (baseNode.content as ScheduleAlertBlock).scheduleAlert
+            };
+          } else if (baseNode.type === 'ALERT_STATUS') {
+            return {
+              ...baseContent,
+              alertStatus: (baseNode.content as AlertStatusBlock).alertStatus
             };
           }
           return null;

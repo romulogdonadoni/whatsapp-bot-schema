@@ -1,7 +1,7 @@
 export interface BaseBlock extends Record<string, unknown> {
     key: string;
-    type: 'MESSAGE' | 'INPUT' | 'CONDITION' | 'WEBHOOK' | 'INITIAL_SETTINGS';
-    content: MessageBlock | InputBlock | ConditionBlock | WebhookContent | InitialSettingsNode;
+    type: 'MESSAGE' | 'INPUT' | 'CONDITION' | 'WEBHOOK' | 'INITIAL_SETTINGS' | 'ACTION' | 'DYNAMIC_MESSAGE' | 'TEMPLATE' | 'SCHEDULE_ALERT' | 'ALERT_STATUS';
+    content: MessageBlock | InputBlock | ConditionBlock | WebhookContent | InitialSettingsNode | ActionBlock | DynamicMessageBlock | TemplateBlock | ScheduleAlertBlock | AlertStatusBlock;
     next?: string;
     back?: { to: string };
 }
@@ -116,5 +116,56 @@ export interface WebhookContent {
             };
             saveResponse?: boolean;
         }>;
+    };
+}
+
+export interface ActionBlock {
+    action: {
+        type: "SET" | "GOTO" | "START_PROTOCOL";
+        next?: string;
+        value?: string;
+        variable?: {
+            key: string;
+            type: "MEMORY" | "DATABASE";
+        };
+        responseValue?: {
+            key: string;
+            isList: boolean;
+        };
+    };
+}
+
+export interface DynamicMessageBlock {
+    dynamicMessage: {
+        template: string;
+        variables: Array<{
+            key: string;
+            type: "MEMORY" | "DATABASE";
+        }>;
+    };
+}
+
+export interface TemplateBlock {
+    template: {
+        name: string;
+        language: string;
+        components: Record<string, string>;
+    };
+}
+
+export interface ScheduleAlertBlock {
+    scheduleAlert: {
+        message: string;
+        schedule: {
+            date: string;
+            time: string;
+        };
+    };
+}
+
+export interface AlertStatusBlock {
+    alertStatus: {
+        status: "PENDING" | "COMPLETED" | "CANCELED";
+        message: string;
     };
 }
