@@ -63,42 +63,103 @@ const InputNode = ({ data, onChange }: InputNodeProps) => {
         onChange?.(updatedData);
     };
 
+    const updateField = (field: keyof InputBlock['input'], value: string | null) => {
+        const updatedData: InputBlock = {
+            input: {
+                ...data.input,
+                [field]: value
+            }
+        };
+        onChange?.(updatedData);
+    };
+
+    const updateVariable = (field: 'key' | 'type', value: string) => {
+        const updatedData: InputBlock = {
+            input: {
+                ...data.input,
+                variable: {
+                    ...data.input.variable,
+                    [field]: value
+                }
+            }
+        };
+        onChange?.(updatedData);
+    };
+
     return (
         <div className="flex flex-col gap-4 p-0 mt-8">
             <div className="grid gap-2">
-                <Label htmlFor="variable">Variável</Label>
+                <Label htmlFor="variable">Nome da Variável</Label>
                 <Input
                     id="variable"
                     type="text"
                     value={data.input.variable.key}
-                    placeholder="Variável"
-                    readOnly
+                    onChange={(e) => updateVariable('key', e.target.value)}
+                    placeholder="Nome da variável"
                 />
             </div>
+
+            <div className="grid gap-2">
+                <Label htmlFor="variableType">Tipo da Variável</Label>
+                <Select
+                    value={data.input.variable.type}
+                    onValueChange={(value) => updateVariable('type', value)}
+                >
+                    <SelectTrigger className="w-full" id="variableType">
+                        <SelectValue placeholder="Selecione o tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectGroup>
+                            <SelectItem value="string">Texto</SelectItem>
+                            <SelectItem value="number">Número</SelectItem>
+                            <SelectItem value="boolean">Booleano</SelectItem>
+                            <SelectItem value="date">Data</SelectItem>
+                        </SelectGroup>
+                    </SelectContent>
+                </Select>
+            </div>
+
             <div className="grid gap-2">
                 <Label htmlFor="regex">Regex</Label>
                 <Input
                     id="regex"
                     type="text"
                     value={data.input.regex}
-                    placeholder="Regex"
-                    readOnly
+                    onChange={(e) => updateField('regex', e.target.value)}
+                    placeholder="Expressão regular"
                 />
             </div>
+
             <div className="grid gap-2">
                 <Label htmlFor="validator">Validador</Label>
-                <Select>
+                <Select
+                    value={data.input.validator || 'none'}
+                    onValueChange={(value) => updateField('validator', value === 'none' ? null : value)}
+                >
                     <SelectTrigger className="w-full" id="validator">
                         <SelectValue placeholder="Selecione um validador" />
                     </SelectTrigger>
                     <SelectContent>
                         <SelectGroup>
+                            <SelectItem value="none">Nenhum</SelectItem>
                             <SelectItem value="cpf">CPF</SelectItem>
                             <SelectItem value="birthdate">Data de Nascimento</SelectItem>
                         </SelectGroup>
                     </SelectContent>
                 </Select>
             </div>
+
+            <div className="grid gap-2">
+                <Label htmlFor="regexDontMatchBlock">Bloco de Não Correspondência</Label>
+                <Input
+                    id="regexDontMatchBlock"
+                    type="text"
+                    value={data.input.regexDontMatchBlock}
+                    onChange={(e) => updateField('regexDontMatchBlock', e.target.value)}
+                    placeholder="Bloco para quando não corresponder ao regex"
+                />
+            </div>
+
             <div className="grid gap-2">
                 <Label>Condições</Label>
                 <div className="flex gap-2">
@@ -165,6 +226,19 @@ const InputNode = ({ data, onChange }: InputNodeProps) => {
                         </div>
                     </Card>
                 ))}
+            </div>
+
+            <div className="grid gap-2 relative">
+                <div className="flex items-center gap-2">
+                    <Label>Bloco Anterior</Label>
+                    <span className="ml-auto">{data.input.back?.to || 'Não conectado'}</span>
+                </div>
+                <Handle
+                    id="0"
+                    type="source"
+                    position={Position.Left}
+                    className="!bg-blue-500 !w-3 !h-3"
+                />
             </div>
         </div>
     );
