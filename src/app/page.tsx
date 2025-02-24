@@ -48,6 +48,179 @@ const convertSchemaToEdges = (nodes: Node<NodeData>[]): Edge[] => {
   let edgeId = 0;
 
   nodes.forEach((node) => {
+    // Edge do firstBlock para o nó inicial
+    if (node.type === 'firstNode') {
+      const initialSettings = node.data as InitialSettingsNodeType;
+
+      // Conexão do firstBlock
+      if (initialSettings.firstBlock) {
+        edges.push({
+          id: `e${edgeId++}`,
+          source: node.id,
+          target: initialSettings.firstBlock,
+          sourceHandle: 'firstBlock',
+          deletable: true,
+          markerEnd: { type: MarkerType.ArrowClosed },
+        });
+      }
+
+      // Conexão do resetBlock
+      if (initialSettings.resetBlock) {
+        edges.push({
+          id: `e${edgeId++}`,
+          source: node.id,
+          target: initialSettings.resetBlock,
+          sourceHandle: 'resetBlock',
+          deletable: true,
+          markerEnd: { type: MarkerType.ArrowClosed },
+        });
+      }
+
+      // Conexão do weekendBlock
+      if (initialSettings.weekendBlock) {
+        edges.push({
+          id: `e${edgeId++}`,
+          source: node.id,
+          target: initialSettings.weekendBlock,
+          sourceHandle: 'weekendBlock',
+          deletable: true,
+          markerEnd: { type: MarkerType.ArrowClosed },
+        });
+      }
+
+      // Conexão do holidaysBlock
+      if (initialSettings.holidaysBlock) {
+        edges.push({
+          id: `e${edgeId++}`,
+          source: node.id,
+          target: initialSettings.holidaysBlock,
+          sourceHandle: 'holidaysBlock',
+          deletable: true,
+          markerEnd: { type: MarkerType.ArrowClosed },
+        });
+      }
+
+      // Conexão do timeoutBlock
+      if (initialSettings.timeoutSettings?.block) {
+        edges.push({
+          id: `e${edgeId++}`,
+          source: node.id,
+          target: initialSettings.timeoutSettings.block,
+          sourceHandle: 'timeoutBlock',
+          deletable: true,
+          markerEnd: { type: MarkerType.ArrowClosed },
+        });
+      }
+
+      // Conexão do endProtocolBlock
+      if (initialSettings.endProtocolBlock) {
+        edges.push({
+          id: `e${edgeId++}`,
+          source: node.id,
+          target: initialSettings.endProtocolBlock,
+          sourceHandle: 'endProtocolBlock',
+          deletable: true,
+          markerEnd: { type: MarkerType.ArrowClosed },
+        });
+      }
+
+      // Conexão do outOfServiceBlock
+      if (initialSettings.outOfServiceBlock) {
+        edges.push({
+          id: `e${edgeId++}`,
+          source: node.id,
+          target: initialSettings.outOfServiceBlock,
+          sourceHandle: 'outOfServiceBlock',
+          deletable: true,
+          markerEnd: { type: MarkerType.ArrowClosed },
+        });
+      }
+
+      // Conexão do requestErrorBlock
+      if (initialSettings.requestErrorBlock) {
+        edges.push({
+          id: `e${edgeId++}`,
+          source: node.id,
+          target: initialSettings.requestErrorBlock,
+          sourceHandle: 'requestErrorBlock',
+          deletable: true,
+          markerEnd: { type: MarkerType.ArrowClosed },
+        });
+      }
+
+      // Conexão do startProtocolBlock
+      if (initialSettings.startProtocolBlock) {
+        edges.push({
+          id: `e${edgeId++}`,
+          source: node.id,
+          target: initialSettings.startProtocolBlock,
+          sourceHandle: 'startProtocolBlock',
+          deletable: true,
+          markerEnd: { type: MarkerType.ArrowClosed },
+        });
+      }
+
+      // Conexão do timeoutProtocolBlock
+      if (initialSettings.timeoutProtocolBlock) {
+        edges.push({
+          id: `e${edgeId++}`,
+          source: node.id,
+          target: initialSettings.timeoutProtocolBlock,
+          sourceHandle: 'timeoutProtocolBlock',
+          deletable: true,
+          markerEnd: { type: MarkerType.ArrowClosed },
+        });
+      }
+
+      // Conexão do canceledProtocolBlock
+      if (initialSettings.canceledProtocolBlock) {
+        edges.push({
+          id: `e${edgeId++}`,
+          source: node.id,
+          target: initialSettings.canceledProtocolBlock,
+          sourceHandle: 'canceledProtocolBlock',
+          deletable: true,
+          markerEnd: { type: MarkerType.ArrowClosed },
+        });
+      }
+
+      // Conexão do scheduleProtocolBlock
+      if (initialSettings.scheduleProtocolBlock) {
+        edges.push({
+          id: `e${edgeId++}`,
+          source: node.id,
+          target: initialSettings.scheduleProtocolBlock,
+          sourceHandle: 'scheduleProtocolBlock',
+          deletable: true,
+          markerEnd: { type: MarkerType.ArrowClosed },
+        });
+      }
+
+      // Conexão do cancelMessage
+      if (initialSettings.cancelMessage) {
+        edges.push({
+          id: `e${edgeId++}`,
+          source: node.id,
+          target: initialSettings.cancelMessage,
+          sourceHandle: 'cancelMessage',
+          deletable: true,
+          markerEnd: { type: MarkerType.ArrowClosed },
+        });
+      }
+
+      // Conexão do notFoundMessage
+      if (initialSettings.notFoundMessage?.value) {
+        edges.push({
+          id: `e${edgeId++}`,
+          source: node.id,
+          target: initialSettings.notFoundMessage.value,
+          sourceHandle: 'notFoundMessage',
+          deletable: true,
+          markerEnd: { type: MarkerType.ArrowClosed },
+        });
+      }
+    }
+
     // Edge padrão do next
     if (node.data.next && typeof node.data.next === 'string') {
       edges.push({
@@ -60,11 +233,24 @@ const convertSchemaToEdges = (nodes: Node<NodeData>[]): Edge[] => {
       });
     }
 
+    // Edge do bloco anterior (back)
+    const nodeData = node.data as BaseBlock;
+    if (nodeData.back && typeof nodeData.back.to === 'string' && nodeData.back.to !== '') {
+      edges.push({
+        id: `e${edgeId++}`,
+        source: node.id,
+        target: nodeData.back.to,
+        sourceHandle: '0', // Handle do "Bloco anterior"
+        deletable: true,
+        markerEnd: { type: MarkerType.ArrowClosed },
+      });
+    }
+
     // Edges para condições em nodes do tipo INPUT
     if (node.data.type === 'INPUT' && 'input' in node.data.content) {
       const input = (node.data.content as InputBlock).input;
       input.conditions?.forEach((condition, index) => {
-        if (condition.action.type === 'GOTO') {
+        if (condition.action.type === 'GOTO' && condition.action.value) {
           edges.push({
             id: `e${edgeId++}`,
             source: node.id,
@@ -80,14 +266,17 @@ const convertSchemaToEdges = (nodes: Node<NodeData>[]): Edge[] => {
     // Edges para condições em nodes do tipo CONDITION
     if (node.data.type === 'CONDITION' && 'conditions' in node.data.content) {
       const conditions = (node.data.content as ConditionBlock).conditions;
-      conditions?.forEach((condition) => {
-        edges.push({
-          id: `e${edgeId++}`,
-          source: node.id,
-          target: condition.next,
-          deletable: true,
-          markerEnd: { type: MarkerType.ArrowClosed },
-        });
+      conditions?.forEach((condition, index) => {
+        if (condition.next) {
+          edges.push({
+            id: `e${edgeId++}`,
+            source: node.id,
+            target: condition.next,
+            sourceHandle: `condition_${index}`,
+            deletable: true,
+            markerEnd: { type: MarkerType.ArrowClosed },
+          });
+        }
       });
     }
   });
@@ -336,6 +525,31 @@ const FlowEditor: React.FC<FlowEditorProps> = ({
       elementsSelectable={true}
       minZoom={0.1}
       maxZoom={2}
+      connectOnClick={false}
+      isValidConnection={(connection) => {
+        // Verifica se o handle de origem é do tipo "source" e o handle de destino é do tipo "target"
+        const sourceHandleType = connection.sourceHandle?.startsWith('condition_') ? 'source' :
+          connection.sourceHandle === '0' ? 'source' :
+            connection.sourceHandle === '1' ? 'source' :
+              connection.sourceHandle === 'firstBlock' ? 'source' :
+                connection.sourceHandle === 'resetBlock' ? 'source' :
+                  connection.sourceHandle === 'weekendBlock' ? 'source' :
+                    connection.sourceHandle === 'holidaysBlock' ? 'source' :
+                      connection.sourceHandle === 'timeoutBlock' ? 'source' :
+                        connection.sourceHandle === 'endProtocolBlock' ? 'source' :
+                          connection.sourceHandle === 'outOfServiceBlock' ? 'source' :
+                            connection.sourceHandle === 'requestErrorBlock' ? 'source' :
+                              connection.sourceHandle === 'startProtocolBlock' ? 'source' :
+                                connection.sourceHandle === 'timeoutProtocolBlock' ? 'source' :
+                                  connection.sourceHandle === 'canceledProtocolBlock' ? 'source' :
+                                    connection.sourceHandle === 'scheduleProtocolBlock' ? 'source' :
+                                      connection.sourceHandle === 'cancelMessage' ? 'source' :
+                                        connection.sourceHandle === 'notFoundMessage' ? 'source' : 'target';
+
+        const targetHandleType = connection.targetHandle === 'target' ? 'target' : 'source';
+
+        return sourceHandleType === 'source' && targetHandleType === 'target';
+      }}
     >
       <Controls />
       <MiniMap />
@@ -385,8 +599,25 @@ export default function Home() {
         onUpdate={(updatedData) => handleNodeUpdate(props.id, updatedData)}
       />
     ),
-    firstNode: InitialSettingsNode,
-  }), [handleNodeUpdate]);
+    firstNode: (props: { id: string; data: InitialSettingsNodeType }) => (
+      <InitialSettingsNode
+        {...props}
+        onUpdate={(updatedData) => {
+          setNodes((nds) => {
+            return nds.map((node) => {
+              if (node.id === props.id) {
+                return {
+                  ...node,
+                  data: updatedData
+                };
+              }
+              return node;
+            });
+          });
+        }}
+      />
+    ),
+  }), [handleNodeUpdate, setNodes]);
 
   // Gera o JSON dos nodes
   const nodesJson = useMemo(() => {
@@ -396,50 +627,49 @@ export default function Home() {
       key: "Flow",
       description: "Flow gerado",
       blocks: nodes
+        .filter(node => node.type === 'baseNode')
         .map(node => {
-          if (node.type === 'baseNode') {
-            const baseNode = node.data as BaseBlock;
-            const baseContent = {
-              key: baseNode.key,
-              next: baseNode.next || '',
-              type: baseNode.type,
-              back: baseNode.back || { to: '' }
-            };
+          const baseNode = node.data as BaseBlock;
+          const baseContent = {
+            key: baseNode.key,
+            next: baseNode.next || '',
+            type: baseNode.type,
+            back: baseNode.back || { to: '' }
+          };
 
-            if (baseNode.type === 'MESSAGE') {
-              return {
-                ...baseContent,
-                message: (baseNode.content as MessageBlock).message
-              };
-            } else if (baseNode.type === 'INPUT') {
-              const inputContent = baseNode.content as InputBlock;
-              return {
-                ...baseContent,
-                input: {
-                  ...inputContent.input,
-                  back: inputContent.input.back || { to: '' },
-                  conditions: inputContent.input.conditions.map(condition => ({
-                    value: condition.value,
-                    action: {
-                      type: condition.action.type,
-                      value: condition.action.value || ''
-                    }
-                  }))
-                }
-              };
-            } else if (baseNode.type === 'CONDITION') {
-              return {
-                ...baseContent,
-                conditions: (baseNode.content as ConditionBlock).conditions
-              };
-            }
+          if (baseNode.type === 'MESSAGE') {
+            return {
+              ...baseContent,
+              message: (baseNode.content as MessageBlock).message
+            };
+          } else if (baseNode.type === 'INPUT') {
+            const inputContent = baseNode.content as InputBlock;
+            return {
+              ...baseContent,
+              input: {
+                ...inputContent.input,
+                back: inputContent.input.back || { to: '' },
+                conditions: inputContent.input.conditions.map(condition => ({
+                  value: condition.value,
+                  action: {
+                    type: condition.action.type,
+                    value: condition.action.value || ''
+                  }
+                }))
+              }
+            };
+          } else if (baseNode.type === 'CONDITION') {
+            return {
+              ...baseContent,
+              conditions: (baseNode.content as ConditionBlock).conditions
+            };
           }
           return null;
         })
         .filter(Boolean)
     }];
 
-    return JSON.stringify({
+    const jsonData = {
       flows,
       header: { value: initialSettings?.header?.value || '' },
       startTime: initialSettings?.startTime || '',
@@ -463,7 +693,14 @@ export default function Home() {
       timeoutProtocolBlock: initialSettings?.timeoutProtocolBlock || '',
       canceledProtocolBlock: initialSettings?.canceledProtocolBlock || '',
       scheduleProtocolBlock: initialSettings?.scheduleProtocolBlock || null
-    }, null, 2);
+    };
+
+    // Verifica se está no navegador antes de usar localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('whatsapp-bot-schema', JSON.stringify(jsonData));
+    }
+
+    return JSON.stringify(jsonData, null, 2);
   }, [nodes]);
 
   // Salva os nodes quando houver mudanças
@@ -502,6 +739,28 @@ export default function Home() {
 
             setNodes(nodes => nodes.map(node => {
               if (node.id === deletedEdge.source) {
+                // Se for uma edge de condição (CONDITION)
+                if (node.data.type === 'CONDITION' && 'content' in node.data && typeof node.data.content === 'object' && node.data.content && 'conditions' in node.data.content) {
+                  const conditions = (node.data.content as ConditionBlock).conditions;
+                  const updatedConditions = conditions.map(condition => {
+                    if (condition.next === deletedEdge.target) {
+                      return {
+                        ...condition,
+                        next: ''
+                      };
+                    }
+                    return condition;
+                  });
+                  return {
+                    ...node,
+                    data: {
+                      ...node.data,
+                      content: {
+                        conditions: updatedConditions
+                      }
+                    }
+                  };
+                }
                 // Se for uma edge de condição (INPUT)
                 if (deletedEdge.sourceHandle?.startsWith('condition_') && node.data.type === 'INPUT') {
                   const conditionIndex = parseInt(deletedEdge.sourceHandle.split('_')[1]);
@@ -559,6 +818,7 @@ export default function Home() {
   }, [setEdges, setNodes, selectedEdge, setSelectedEdge]);
 
   const onConnect = useCallback((params: Connection) => {
+
     // Remove edges existentes do mesmo handle de origem
     setEdges(eds => {
       const filteredEdges = eds.filter(e => !(e.source === params.source && e.sourceHandle === params.sourceHandle));
@@ -577,7 +837,45 @@ export default function Home() {
     if (params.source && params.target) {
       setNodes(nodes => nodes.map(node => {
         if (node.id === params.source) {
-          // Se for um handle de condição
+          const updatedData = { ...node.data };
+
+          // Mapeia os handles para as propriedades correspondentes
+          const handleToProperty: { [key: string]: string } = {
+            'firstBlock': 'firstBlock',
+            'resetBlock': 'resetBlock',
+            'weekendBlock': 'weekendBlock',
+            'holidaysBlock': 'holidaysBlock',
+            'timeoutBlock': 'timeoutSettings.block',
+            'endProtocolBlock': 'endProtocolBlock',
+            'outOfServiceBlock': 'outOfServiceBlock',
+            'requestErrorBlock': 'requestErrorBlock',
+            'startProtocolBlock': 'startProtocolBlock',
+            'timeoutProtocolBlock': 'timeoutProtocolBlock',
+            'canceledProtocolBlock': 'canceledProtocolBlock',
+            'scheduleProtocolBlock': 'scheduleProtocolBlock',
+            'cancelMessage': 'cancelMessage',
+            'notFoundMessage': 'notFoundMessage.value'
+          };
+
+          const propertyPath = handleToProperty[params.sourceHandle || ''];
+          if (propertyPath) {
+            const pathParts = propertyPath.split('.');
+            if (pathParts.length === 2) {
+              if (!updatedData[pathParts[0]]) {
+                updatedData[pathParts[0]] = {};
+              }
+              (updatedData[pathParts[0]] as Record<string, string>)[pathParts[1]] = params.target as string;
+            } else {
+              updatedData[propertyPath] = params.target;
+            }
+
+            return {
+              ...node,
+              data: updatedData
+            };
+          }
+
+          // Se for um handle de condição em INPUT
           if (params.sourceHandle?.startsWith('condition_')) {
             const conditionIndex = parseInt(params.sourceHandle.split('_')[1]);
             if (node.data.type === 'INPUT' && 'input' in node.data.content) {
@@ -605,6 +903,28 @@ export default function Home() {
                 }
               };
             }
+            // Se for um handle de condição em CONDITION
+            if (node.data.type === 'CONDITION' && 'conditions' in node.data.content) {
+              const conditions = (node.data.content as ConditionBlock).conditions;
+              const updatedConditions = conditions.map((condition, index) => {
+                if (index === conditionIndex) {
+                  return {
+                    ...condition,
+                    next: params.target as string
+                  };
+                }
+                return condition;
+              });
+              return {
+                ...node,
+                data: {
+                  ...node.data,
+                  content: {
+                    conditions: updatedConditions
+                  }
+                }
+              };
+            }
           } else if (params.sourceHandle === '0') {
             // Se for o handle do bloco anterior
             return {
@@ -614,7 +934,7 @@ export default function Home() {
                 back: { to: params.target }
               }
             };
-          } else {
+          } else if (params.sourceHandle === '1') {
             // Se for o handle padrão de "Próximo"
             return {
               ...node,
@@ -642,6 +962,44 @@ export default function Home() {
     if (newConnection.source && newConnection.target) {
       setNodes(nodes => nodes.map(node => {
         if (node.id === newConnection.source) {
+          const updatedData = { ...node.data };
+
+          // Mapeia os handles para as propriedades correspondentes
+          const handleToProperty: { [key: string]: string } = {
+            'firstBlock': 'firstBlock',
+            'resetBlock': 'resetBlock',
+            'weekendBlock': 'weekendBlock',
+            'holidaysBlock': 'holidaysBlock',
+            'timeoutBlock': 'timeoutSettings.block',
+            'endProtocolBlock': 'endProtocolBlock',
+            'outOfServiceBlock': 'outOfServiceBlock',
+            'requestErrorBlock': 'requestErrorBlock',
+            'startProtocolBlock': 'startProtocolBlock',
+            'timeoutProtocolBlock': 'timeoutProtocolBlock',
+            'canceledProtocolBlock': 'canceledProtocolBlock',
+            'scheduleProtocolBlock': 'scheduleProtocolBlock',
+            'cancelMessage': 'cancelMessage',
+            'notFoundMessage': 'notFoundMessage.value'
+          };
+
+          const propertyPath = handleToProperty[newConnection.sourceHandle || ''];
+          if (propertyPath) {
+            const pathParts = propertyPath.split('.');
+            if (pathParts.length === 2) {
+              if (!updatedData[pathParts[0]]) {
+                updatedData[pathParts[0]] = {};
+              }
+              (updatedData[pathParts[0]] as Record<string, string>)[pathParts[1]] = newConnection.target as string;
+            } else {
+              updatedData[propertyPath] = newConnection.target;
+            }
+
+            return {
+              ...node,
+              data: updatedData
+            };
+          }
+
           if (newConnection.sourceHandle === '0') {
             // Se for o handle do bloco anterior
             return {
@@ -651,7 +1009,7 @@ export default function Home() {
                 back: { to: newConnection.target }
               }
             };
-          } else {
+          } else if (newConnection.sourceHandle === '1') {
             // Se for o handle padrão de "Próximo"
             return {
               ...node,
@@ -679,6 +1037,44 @@ export default function Home() {
       // Limpa os valores do node de origem quando a aresta é desconectada
       setNodes(nodes => nodes.map(node => {
         if (node.id === edge.source) {
+          const updatedData = { ...node.data };
+
+          // Mapeia os handles para as propriedades correspondentes
+          const handleToProperty: { [key: string]: string } = {
+            'firstBlock': 'firstBlock',
+            'resetBlock': 'resetBlock',
+            'weekendBlock': 'weekendBlock',
+            'holidaysBlock': 'holidaysBlock',
+            'timeoutBlock': 'timeoutSettings.block',
+            'endProtocolBlock': 'endProtocolBlock',
+            'outOfServiceBlock': 'outOfServiceBlock',
+            'requestErrorBlock': 'requestErrorBlock',
+            'startProtocolBlock': 'startProtocolBlock',
+            'timeoutProtocolBlock': 'timeoutProtocolBlock',
+            'canceledProtocolBlock': 'canceledProtocolBlock',
+            'scheduleProtocolBlock': 'scheduleProtocolBlock',
+            'cancelMessage': 'cancelMessage',
+            'notFoundMessage': 'notFoundMessage.value'
+          };
+
+          const propertyPath = handleToProperty[edge.sourceHandle || ''];
+          if (propertyPath) {
+            const pathParts = propertyPath.split('.');
+            if (pathParts.length === 2) {
+              if (!updatedData[pathParts[0]]) {
+                updatedData[pathParts[0]] = {};
+              }
+              (updatedData[pathParts[0]] as Record<string, string>)[pathParts[1]] = '';
+            } else {
+              updatedData[propertyPath] = '';
+            }
+
+            return {
+              ...node,
+              data: updatedData
+            };
+          }
+
           // Se for uma edge de condição (INPUT)
           if (edge.sourceHandle?.startsWith('condition_') && node.data.type === 'INPUT') {
             const conditionIndex = parseInt(edge.sourceHandle.split('_')[1]);
@@ -706,6 +1102,28 @@ export default function Home() {
               }
             };
           }
+          // Se for uma edge de condição (CONDITION)
+          if (node.data.type === 'CONDITION' && 'content' in node.data && typeof node.data.content === 'object' && node.data.content && 'conditions' in node.data.content) {
+            const conditions = (node.data.content as ConditionBlock).conditions;
+            const updatedConditions = conditions.map(condition => {
+              if (condition.next === edge.target) {
+                return {
+                  ...condition,
+                  next: ''
+                };
+              }
+              return condition;
+            });
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                content: {
+                  conditions: updatedConditions
+                }
+              }
+            };
+          }
           // Se for uma edge do bloco anterior
           if (edge.sourceHandle === '0') {
             return {
@@ -717,20 +1135,20 @@ export default function Home() {
             };
           }
           // Se for uma edge normal (next)
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              next: ''
-            }
-          };
+          if (edge.sourceHandle === '1') {
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                next: ''
+              }
+            };
+          }
         }
         return node;
       }));
     }
-
-    edgeReconnectSuccessful.current = true;
-  }, [selectedEdge, setSelectedEdge]);
+  }, [selectedEdge, setSelectedEdge, setEdges, setNodes]);
 
   return (
     <ReactFlowProvider>

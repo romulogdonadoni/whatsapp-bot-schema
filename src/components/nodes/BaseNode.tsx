@@ -69,16 +69,24 @@ const BaseNode = ({ data, onUpdate }: BaseNodeProps) => {
 
             <CardContent className="p-4">
                 <div className='flex justify-between gap-2 relative'>
-                    <div className="flex flex-col gap-1 px-0 py-1">
-                        <div className="flex gap-2 items-center">
-                            <Handle id='0' type="source" position={Position.Left} style={{ background: '#4299e1', width: '12px', height: '12px', left: '-16px' }} />
-                            <Label className='text-sm ml-auto'>Bloco anterior</Label>
-                        </div>
-                    </div>
-                    <div className="flex relative gap-2 items-center px-0 py-1">
-                        <Label className='text-sm ml-auto'>Bloco posterior</Label>
-                        <Handle id='1' type="source" position={Position.Right} style={{ background: '#4299e1', width: '12px', height: '12px', right: '-16px' }} />
-                    </div>
+                    {
+                        data.type === 'INPUT' && (
+                            <div className="flex flex-col gap-1 px-0 py-1">
+                                <div className="flex gap-2 items-center">
+                                    <Handle id='0' type="source" position={Position.Left} style={{ background: '#4299e1', width: '12px', height: '12px', left: '-16px' }} />
+                                    <Label className='text-sm ml-auto'>Bloco anterior</Label>
+                                </div>
+                            </div>
+                        )
+                    }
+                    {
+                        data.type !== 'CONDITION' && (
+                            <div className="flex gap-2 items-center ml-auto">
+                                <Handle id='1' type="source" position={Position.Right} style={{ background: '#4299e1', width: '12px', height: '12px', right: '-16px' }} />
+                                <Label className='text-sm ml-auto'>Bloco posterior</Label>
+                            </div>
+                        )
+                    }
                 </div>
 
                 {data.type === 'MESSAGE' && (

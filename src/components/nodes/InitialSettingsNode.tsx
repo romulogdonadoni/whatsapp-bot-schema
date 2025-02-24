@@ -3,11 +3,11 @@ import { Label } from '@/components/ui/label';
 import { InitialSettingsNode as InitialSettingsNodeType } from '@/types/BlockType';
 import { Handle, Position } from '@xyflow/react';
 import { GripHorizontal } from 'lucide-react';
-import { useState } from 'react';
 import { Input } from '../ui/input';
 
 interface InitialSettingsNodeProps {
     data: InitialSettingsNodeType;
+    onUpdate?: (data: InitialSettingsNodeType) => void;
 }
 
 const colors = {
@@ -19,25 +19,42 @@ const colors = {
     }
 };
 
-const InitialSettingsNode = ({ data }: InitialSettingsNodeProps) => {
-    const [headerValue, setHeaderValue] = useState(data?.header?.value);
-    const [timeoutHours, setTimeoutHours] = useState(data?.timeoutSettings?.hours || 0);
-    const [timeoutMinutes, setTimeoutMinutes] = useState(data?.timeoutSettings?.minutes || 0);
+const InitialSettingsNode = ({ data, onUpdate }: InitialSettingsNodeProps) => {
+    const handleInputChange = (key: string, value: string | number) => {
+        if (!onUpdate) return;
 
-    const handleInputChange = (key: string, value: string) => {
-        setHeaderValue(value);
+        const updatedData = { ...data };
+
+        if (key === 'header') {
+            updatedData.header = { value: value as string };
+        } else if (key === 'timeoutSettings.hours') {
+            updatedData.timeoutSettings = {
+                ...updatedData.timeoutSettings,
+                hours: value as number
+            };
+        } else if (key === 'timeoutSettings.minutes') {
+            updatedData.timeoutSettings = {
+                ...updatedData.timeoutSettings,
+                minutes: value as number
+            };
+        } else if (key === 'notFoundMessage') {
+            updatedData.notFoundMessage = { value: value as string };
+        } else {
+            (updatedData as InitialSettingsNodeType)[key as keyof InitialSettingsNodeType] = value;
+        }
+
+        onUpdate(updatedData);
     };
 
     return (
-        <Card className={`w-[400px] ${colors[data.type].border} border-2`}>
-            <CardHeader className={`${colors[data.type].header} p-4 custom-drag-handle relative`}>
+        <Card className={`w-[400px] ${colors?.INITIAL_SETTINGS?.border} border-2`}>
+            <CardHeader className={`${colors?.INITIAL_SETTINGS?.header} p-4 custom-drag-handle relative`}>
                 <div className="flex items-center">
                     <span className="font-semibold">INITIAL SETTINGS</span>
                     <span className="ml-2 text-xs opacity-75">(INÍCIO)</span>
                     <GripHorizontal size={26} className="ml-auto" />
                 </div>
             </CardHeader>
-
 
             <CardContent className="p-4 space-y-2">
                 <div className="grid gap-2 relative">
@@ -54,16 +71,14 @@ const InitialSettingsNode = ({ data }: InitialSettingsNodeProps) => {
                 </div>
             </CardContent>
 
-            <CardContent className="p-4 space-y-2  mt-8">
-
-
+            <CardContent className="p-4 space-y-2 mt-8">
                 <div className="flex gap-2">
                     <div className="grid gap-2">
                         <Label>Horário de funcionamento</Label>
                         <Input
                             type="text"
                             placeholder="00:00"
-                            value={data?.startTime}
+                            value={data.startTime}
                             onChange={(e) => handleInputChange('startTime', e.target.value)}
                         />
                     </div>
@@ -72,7 +87,7 @@ const InitialSettingsNode = ({ data }: InitialSettingsNodeProps) => {
                         <Input
                             type="text"
                             placeholder="00:00"
-                            value={data?.endTime}
+                            value={data.endTime}
                             onChange={(e) => handleInputChange('endTime', e.target.value)}
                         />
                     </div>
@@ -84,9 +99,9 @@ const InitialSettingsNode = ({ data }: InitialSettingsNodeProps) => {
                         <Input
                             type="number"
                             min="0"
-                            value={timeoutHours}
+                            value={data.timeoutSettings.hours}
                             className='w-full'
-                            onChange={(e) => setTimeoutHours(parseInt(e.target.value))}
+                            onChange={(e) => handleInputChange('timeoutSettings.hours', parseInt(e.target.value) || 0)}
                         />
                     </div>
                     <div className="grid gap-2">
@@ -95,9 +110,9 @@ const InitialSettingsNode = ({ data }: InitialSettingsNodeProps) => {
                             type="number"
                             min="0"
                             max="59"
-                            value={timeoutMinutes}
+                            value={data.timeoutSettings.minutes}
                             className='w-full'
-                            onChange={(e) => setTimeoutMinutes(parseInt(e.target.value))}
+                            onChange={(e) => handleInputChange('timeoutSettings.minutes', parseInt(e.target.value) || 0)}
                         />
                     </div>
                 </div>
@@ -106,7 +121,7 @@ const InitialSettingsNode = ({ data }: InitialSettingsNodeProps) => {
                     <Label>Cabeçalho da Lista</Label>
                     <Input
                         type="text"
-                        value={data?.header?.value}
+                        value={data.header.value}
                         onChange={(e) => handleInputChange('header', e.target.value)}
                     />
                 </div>
@@ -115,11 +130,10 @@ const InitialSettingsNode = ({ data }: InitialSettingsNodeProps) => {
                     <Label>Prefixo da Lista</Label>
                     <Input
                         type="text"
-                        value={data?.listPrefix}
+                        value={data.listPrefix}
                         onChange={(e) => handleInputChange('listPrefix', e.target.value)}
                     />
                 </div>
-
 
                 <div className="grid gap-2 relative">
                     <div className='flex items-center gap-2'>
@@ -134,15 +148,13 @@ const InitialSettingsNode = ({ data }: InitialSettingsNodeProps) => {
                     />
                 </div>
 
-
-
                 <div className="grid gap-2 relative">
                     <div className='flex items-center gap-2'>
                         <Label >Mensagem de Reset</Label>
                         <span className='ml-auto'>{data.resetBlock}</span>
                     </div>
                     <Handle
-                        id="resetMessage"
+                        id="resetBlock"
                         type="source"
                         position={Position.Right}
                         style={{ background: '#4299e1', width: '12px', height: '12px', right: '-16px' }}
@@ -155,20 +167,7 @@ const InitialSettingsNode = ({ data }: InitialSettingsNodeProps) => {
                         <span className='ml-auto'>{data.weekendBlock}</span>
                     </div>
                     <Handle
-                        id="weekendMessage"
-                        type="source"
-                        position={Position.Right}
-                        style={{ background: '#4299e1', width: '12px', height: '12px', right: '-16px' }}
-                    />
-                </div>
-
-                <div className="grid gap-2 relative">
-                    <div className='flex items-center gap-2'>
-                        <Label >Mensagem de Cancelamento</Label>
-                        <span className='ml-auto'>{data.holidaysBlock}</span>
-                    </div>
-                    <Handle
-                        id="cancelMessage"
+                        id="weekendBlock"
                         type="source"
                         position={Position.Right}
                         style={{ background: '#4299e1', width: '12px', height: '12px', right: '-16px' }}
@@ -181,14 +180,12 @@ const InitialSettingsNode = ({ data }: InitialSettingsNodeProps) => {
                         <span className='ml-auto'>{data.holidaysBlock}</span>
                     </div>
                     <Handle
-                        id="holidaysMessage"
+                        id="holidaysBlock"
                         type="source"
                         position={Position.Right}
                         style={{ background: '#4299e1', width: '12px', height: '12px', right: '-16px' }}
                     />
                 </div>
-
-
 
                 <div className="grid gap-2 relative">
                     <div className='flex items-center gap-2'>
@@ -255,7 +252,7 @@ const InitialSettingsNode = ({ data }: InitialSettingsNodeProps) => {
                     />
                 </div>
 
-                <div className="grid gap-2 relative ">
+                <div className="grid gap-2 relative">
                     <div className='flex items-center gap-2'>
                         <Label>Bloco de Timeout de Protocolo</Label>
                         <span className='ml-auto'>{data.timeoutProtocolBlock}</span>
@@ -281,7 +278,7 @@ const InitialSettingsNode = ({ data }: InitialSettingsNodeProps) => {
                     />
                 </div>
 
-                <div className="grid gap-2 relative ">
+                <div className="grid gap-2 relative">
                     <div className='flex items-center gap-2'>
                         <Label>Bloco de Protocolo Agendado</Label>
                         <span className='ml-auto'>{data.scheduleProtocolBlock}</span>
@@ -306,7 +303,6 @@ const InitialSettingsNode = ({ data }: InitialSettingsNodeProps) => {
                         style={{ background: '#4299e1', width: '12px', height: '12px', right: '-16px' }}
                     />
                 </div>
-
             </CardContent>
         </Card>
     );

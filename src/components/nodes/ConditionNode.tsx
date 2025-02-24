@@ -4,12 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ConditionBlock } from '@/types/BlockType';
-import { Handle, Position } from '@xyflow/react';
+import { Connection, Handle, Position } from '@xyflow/react';
 import { GripVertical, Plus, X } from 'lucide-react';
 import { memo, useCallback, useState } from 'react';
 
 interface ConditionNodeProps {
     data: ConditionBlock;
+    id?: string;
     onChange?: (updatedData: ConditionBlock) => void;
 }
 
@@ -20,7 +21,7 @@ interface NewConditionState {
     value: string;
 }
 
-const ConditionNode = memo(({ data, onChange }: ConditionNodeProps) => {
+const ConditionNode = memo(({ data, id, onChange }: ConditionNodeProps) => {
     const [newCondition, setNewCondition] = useState<NewConditionState>({
         key: '',
         type: 'MEMORY',
@@ -29,22 +30,21 @@ const ConditionNode = memo(({ data, onChange }: ConditionNodeProps) => {
     });
 
     const addCondition = useCallback(() => {
-        if (!newCondition.key.trim() || !newCondition.value.trim()) return;
+        const defaultCondition = {
+            next: '',
+            condition: {
+                key: {
+                    key: newCondition.key,
+                    type: newCondition.type
+                },
+                type: newCondition.compareType,
+                value: newCondition.value
+            }
+        };
 
         const updatedData: ConditionBlock = {
             conditions: [
-                ...(data.conditions || []),
-                {
-                    next: '',
-                    condition: {
-                        key: {
-                            key: newCondition.key,
-                            type: newCondition.type
-                        },
-                        type: newCondition.compareType,
-                        value: newCondition.value
-                    }
-                }
+                ...(data.conditions || []), defaultCondition
             ]
         };
 
@@ -106,6 +106,11 @@ const ConditionNode = memo(({ data, onChange }: ConditionNodeProps) => {
                                 value: value
                             }
                         };
+                    } else if (field === 'next') {
+                        return {
+                            ...condition,
+                            next: value
+                        };
                     }
                 }
                 return condition;
@@ -118,66 +123,35 @@ const ConditionNode = memo(({ data, onChange }: ConditionNodeProps) => {
         setNewCondition(prev => ({ ...prev, [field]: value }));
     }, []);
 
+    const onConnect = useCallback((connection: Connection) => {
+        const sourceHandleId = connection.sourceHandle;
+        if (!sourceHandleId) return;
+
+        const conditionIndex = parseInt(sourceHandleId.split('_')[1]);
+        if (isNaN(conditionIndex)) return;
+
+        const updatedData: ConditionBlock = {
+            conditions: data.conditions.map((condition, index) => {
+                if (index === conditionIndex) {
+                    return {
+                        ...condition,
+                        next: connection.target || ''
+                    };
+                }
+                return condition;
+            })
+        };
+
+        onChange?.(updatedData);
+    }, [data.conditions, onChange]);
+
     return (
         <div className="flex flex-col gap-4">
             {/* Adicionar nova condição */}
             <CardContent className="p-0 mt-8">
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <Label>Chave</Label>
-                        <Input
-                            placeholder="Nome da variável"
-                            value={newCondition.key}
-                            onChange={(e) => handleNewConditionChange('key', e.target.value)}
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Tipo</Label>
-                        <Select
-                            value={newCondition.type}
-                            onValueChange={(value) => handleNewConditionChange('type', value)}
-                        >
-                            <SelectTrigger>
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectGroup>
-                                    <SelectItem value="MEMORY">Memória</SelectItem>
-                                    <SelectItem value="DATABASE">Banco de Dados</SelectItem>
-                                </SelectGroup>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Comparação</Label>
-                        <Select
-                            value={newCondition.compareType}
-                            onValueChange={(value) => handleNewConditionChange('compareType', value)}
-                        >
-                            <SelectTrigger>
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectGroup>
-                                    <SelectItem value="EQUAL">Igual</SelectItem>
-                                    <SelectItem value="NOT_EQUAL">Diferente</SelectItem>
-                                </SelectGroup>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Valor</Label>
-                        <Input
-                            placeholder="Valor para comparação"
-                            value={newCondition.value}
-                            onChange={(e) => handleNewConditionChange('value', e.target.value)}
-                        />
-                    </div>
-                </div>
                 <Button
                     className="w-full mt-4"
                     onClick={addCondition}
-                    disabled={!newCondition.key.trim() || !newCondition.value.trim()}
                 >
                     <Plus className="w-4 h-4 mr-2" />
                     Adicionar Condição
@@ -187,13 +161,21 @@ const ConditionNode = memo(({ data, onChange }: ConditionNodeProps) => {
             {/* Lista de condições */}
             <div className="space-y-2">
                 {data.conditions?.map((condition, index) => (
-                    <Card key={index} className="border-gray-700 relative" style={{ transform: 'translate3d(0,0,0)' }}>
+                    <Card key={index} className="border-gray-700 relative group" style={{ transform: 'translate3d(0,0,0)' }}>
                         <div className="flex">
                             <div className="flex items-center justify-center p-2 border-r border-gray-700">
                                 <GripVertical className="text-muted-foreground h-4 w-4" />
                             </div>
                             <CardContent className="flex-1 p-4">
                                 <div className="grid grid-cols-2 gap-2">
+                                    <Button
+                                        variant="destructive"
+                                        size="icon"
+                                        onClick={() => removeCondition(index)}
+                                        className="w-5 h-5 absolute !right-4 !top-4 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                                    >
+                                        <X className="!h-3 !w-3" />
+                                    </Button>
                                     <div className="space-y-2">
                                         <Label>Chave</Label>
                                         <Input
@@ -244,28 +226,22 @@ const ConditionNode = memo(({ data, onChange }: ConditionNodeProps) => {
                                     </div>
                                 </div>
                                 <div className="flex justify-between items-center mt-4">
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex flex-1 items-center gap-2 ">
                                         <span className="text-sm text-muted-foreground">
                                             Próximo:
                                         </span>
-                                        <span className="font-medium">
-                                            {condition.next}
+                                        <span className="font-medium ml-auto relative">
+                                            {condition.next || 'Não conectado'}
+                                            <Handle
+                                                id={`condition_${index}`}
+                                                type="source"
+                                                position={Position.Right}
+                                                className="!bg-purple-500 !w-3 !h-3 absolute !-right-4"
+                                            />
                                         </span>
                                     </div>
-                                    <Button
-                                        variant="destructive"
-                                        size="icon"
-                                        onClick={() => removeCondition(index)}
-                                    >
-                                        <X className="h-4 w-4" />
-                                    </Button>
                                 </div>
-                                <Handle
-                                    id={`condition_${index}`}
-                                    type="source"
-                                    position={Position.Right}
-                                    className="!bg-purple-500 !w-3 !h-3 absolute right-0"
-                                />
+
                             </CardContent>
                         </div>
                     </Card>
