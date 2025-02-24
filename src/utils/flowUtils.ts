@@ -160,7 +160,15 @@ export const loadNodesFromStorage = (): Node<NodeData>[] | null => {
 
 export const saveNodesToStorage = (nodes: Node<NodeData>[]) => {
     if (typeof window === 'undefined') return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(nodes));
+    // Garantir que as posições sejam salvas
+    const nodesToSave = nodes.map(node => ({
+        ...node,
+        position: {
+            x: node.position.x,
+            y: node.position.y
+        }
+    }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(nodesToSave));
 };
 
 export const updateNodeConnection = (

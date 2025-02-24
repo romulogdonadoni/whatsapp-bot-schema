@@ -75,8 +75,30 @@ export const FlowEditor: React.FC<FlowEditorProps> = ({
                                         : type === 'TEMPLATE'
                                             ? { template: { name: '', language: 'pt_BR', components: {} } }
                                             : type === 'SCHEDULE_ALERT'
-                                                ? { scheduleAlert: { message: '', schedule: { date: '', time: '' } } }
-                                                : { alertStatus: { status: 'PENDING', message: '' } }
+                                                ? {
+                                                    scheduleAlert: {
+                                                        alertId: '',
+                                                        onError: '',
+                                                        onSuccess: '',
+                                                        externalId: '',
+                                                        scheduleDate: {
+                                                            date: '',
+                                                            time: '',
+                                                            format: 'DATE_SIMPLE'
+                                                        },
+                                                        beforeReminders: [],
+                                                        companyIdVariable: '',
+                                                        variablesVariable: {}
+                                                    }
+                                                }
+                                                : {
+                                                    alertStatus: {
+                                                        error: null,
+                                                        status: '',
+                                                        response: '',
+                                                        alertIdVariable: ''
+                                                    }
+                                                }
             },
         };
 

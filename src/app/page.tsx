@@ -13,6 +13,7 @@ import InitialSettingsNode from '@/components/nodes/InitialSettingsNode';
 import { Button } from '@/components/ui/button';
 import { useFlowEditor } from '@/hooks/useFlowEditor';
 import { ActionBlock, AlertStatusBlock, BaseBlock, ConditionBlock, DynamicMessageBlock, InitialSettingsNode as InitialSettingsNodeData, InputBlock, MessageBlock, NodeData, ScheduleAlertBlock, TemplateBlock, WebhookContent } from '@/types/BlockType';
+import { SchemaJson } from '@/types/Schema';
 import { Editor } from '@monaco-editor/react';
 import '@xyflow/react/dist/style.css';
 import { Braces, Grid } from 'lucide-react';
@@ -49,8 +50,215 @@ export default function Home() {
 
       setSnapToGrid(savedSnapToGrid === 'true');
       setOpenJsonEditor(savedJsonEditor === 'true');
+
+      // Carregar os blocos do Schema apenas se não houver nós salvos
+      const savedNodes = localStorage.getItem('react-nodes-bot-schema-state');
+      if (!savedNodes) {
+        const loadSchemaBlocks = () => {
+          const { flows } = SchemaJson;
+          const newNodes: Node<NodeData>[] = [];
+
+          // Posição inicial para os nodes
+          let xPos = 0;
+          let yPos = 100;
+
+          flows.forEach(flow => {
+            flow.blocks.forEach(block => {
+              if (!block || !block.type || !block.key) return;
+
+              // Converter o bloco para o formato correto baseado no tipo
+              let nodeData: BaseBlock;
+
+              switch (block.type) {
+                case 'MESSAGE':
+                  if (!block.message?.contents) return;
+                  nodeData = {
+                    key: block.key,
+                    type: block.type,
+                    content: {
+                      message: {
+                        contents: block.message.contents
+                      }
+                    }
+                  };
+                  break;
+                case 'INPUT':
+                  if (!block.input) return;
+                  nodeData = {
+                    key: block.key,
+                    type: block.type,
+                    content: {
+                      input: {
+                        back: block.input.back,
+                        regex: block.input.regex || '',
+                        variable: block.input.variable || { key: '', type: 'MEMORY' },
+                        validator: (block.input.validator as "cpf" | "birthdate" | null) || null,
+                        conditions: block.input.conditions?.map(c => ({
+                          value: c.value || '',
+                          action: {
+                            type: c.action?.type || 'GOTO',
+                            value: c.action?.value || ''
+                          }
+                        })) || [],
+                        regexDontMatchBlock: block.input.regexDontMatchBlock || ''
+                      }
+                    }
+                  };
+                  break;
+                case 'CONDITION':
+                  if (!block.conditions) return;
+                  nodeData = {
+                    key: block.key,
+                    type: block.type,
+                    content: {
+                      conditions: block.conditions.map(c => ({
+                        next: c.next || '',
+                        condition: {
+                          key: c.condition?.key || { key: '', type: 'MEMORY' },
+                          type: c.condition?.type || 'EQUAL',
+                          value: c.condition?.value || ''
+                        }
+                      }))
+                    }
+                  };
+                  break;
+                case 'WEBHOOK':
+                  if (!block.webhook) return;
+                  nodeData = {
+                    key: block.key,
+                    type: block.type,
+                    content: {
+                      webhook: {
+                        url: block.webhook.url || '',
+                        type: block.webhook.type || 'GET',
+                        body: block.webhook.body,
+                        statuses: block.webhook.statuses?.map(s => ({
+                          status: s.status,
+                          action: {
+                            type: (s.action?.type === 'SET' || s.action?.type === 'RESPONSE_VALUE') ? 'GOTO' : (s.action?.type || 'GOTO'),
+                            value: s.action?.value || ''
+                          },
+                          saveResponse: s.saveResponse
+                        })) || []
+                      }
+                    }
+                  };
+                  break;
+                case 'ACTION':
+                  if (!block.action) return;
+                  nodeData = {
+                    key: block.key,
+                    type: block.type,
+                    content: {
+                      action: {
+                        type: (block.action.type === 'RESPONSE_VALUE' ? 'GOTO' : block.action.type) || 'GOTO',
+                        next: block.action.next,
+                        value: block.action.value,
+                        variable: block.action.variable,
+                        responseValue: block.action.responseValue ? {
+                          key: block.action.responseValue.key || '',
+                          isList: !!block.action.responseValue.isList
+                        } : undefined
+                      }
+                    }
+                  };
+                  break;
+                case 'DYNAMIC_MESSAGE':
+                  if (!block.dynamicMessage) return;
+                  nodeData = {
+                    key: block.key,
+                    type: block.type,
+                    content: {
+                      dynamicMessage: {
+                        template: '',
+                        variables: []
+                      }
+                    }
+                  };
+                  break;
+                case 'TEMPLATE':
+                  if (!block.template) return;
+                  nodeData = {
+                    key: block.key,
+                    type: block.type,
+                    content: {
+                      template: {
+                        name: block.template.name || '',
+                        language: block.template.language || '',
+                        components: block.template.components || {}
+                      }
+                    }
+                  };
+                  break;
+                case 'SCHEDULE_ALERT':
+                  if (!block.scheduleAlert) return;
+                  nodeData = {
+                    key: block.key,
+                    type: block.type,
+                    content: {
+                      scheduleAlert: {
+                        alertId: block.scheduleAlert.alertId || '',
+                        onError: block.scheduleAlert.onError || '',
+                        onSuccess: block.scheduleAlert.onSuccess || '',
+                        externalId: block.scheduleAlert.externalId || '',
+                        scheduleDate: {
+                          date: block.scheduleAlert.scheduleDate?.date || '',
+                          time: block.scheduleAlert.scheduleDate?.time || '',
+                          format: block.scheduleAlert.scheduleDate?.format || 'DATE_SIMPLE'
+                        },
+                        beforeReminders: block.scheduleAlert.beforeReminders || [],
+                        companyIdVariable: block.scheduleAlert.companyIdVariable || '',
+                        variablesVariable: block.scheduleAlert.variablesVariable || {}
+                      }
+                    }
+                  };
+                  break;
+                case 'ALERT_STATUS':
+                  if (!block.alertStatus) return;
+                  nodeData = {
+                    key: block.key,
+                    type: block.type,
+                    content: {
+                      alertStatus: {
+                        error: block.alertStatus.error || null,
+                        status: block.alertStatus.status || '',
+                        response: block.alertStatus.response || '',
+                        alertIdVariable: block.alertStatus.alertIdVariable || ''
+                      }
+                    }
+                  };
+                  break;
+                default:
+                  return;
+              }
+
+              const newNode: Node<NodeData> = {
+                id: block.key,
+                type: 'baseNode',
+                dragHandle: '.custom-drag-handle',
+                position: { x: xPos, y: yPos },
+                data: nodeData
+              };
+
+              newNodes.push(newNode);
+
+              // Incrementar posição para o próximo node
+              yPos += 150;
+              if (yPos > 1000) {
+                yPos = 100;
+                xPos += 450;
+              }
+            });
+          });
+
+          // Adicionar os novos nodes aos existentes
+          setNodes(prevNodes => [...prevNodes, ...newNodes]);
+        };
+
+        loadSchemaBlocks();
+      }
     }
-  }, []);
+  }, [setNodes]);
 
   // Salvar preferências quando mudarem
   useEffect(() => {
@@ -97,9 +305,13 @@ export default function Home() {
   const nodesJson = useMemo(() => {
     const initialSettings = nodes.find(node => node.type === 'firstNode')?.data as InitialSettingsNodeData;
 
-    const flows = [{
-      key: "Flow",
-      description: "Flow gerado",
+    // Importar os flows do Schema
+    const { flows } = SchemaJson;
+
+    // Mapear os nodes para cada flow existente
+    const updatedFlows = flows.map(flow => ({
+      key: flow.key,
+      description: flow.description,
       blocks: nodes
         .filter(node => node.type === 'baseNode')
         .map(node => {
@@ -179,10 +391,10 @@ export default function Home() {
           return null;
         })
         .filter(Boolean)
-    }];
+    }));
 
     const jsonData = {
-      flows,
+      flows: updatedFlows,
       header: { value: initialSettings?.header?.value || '' },
       startTime: initialSettings?.startTime || '',
       endTime: initialSettings?.endTime || '',

@@ -14,7 +14,7 @@ const AlertStatusNode = ({ data, onChange }: AlertStatusNodeProps) => {
         const updatedData: AlertStatusBlock = {
             alertStatus: {
                 ...data.alertStatus,
-                [field]: field === 'status' ? value as AlertStatusBlock['alertStatus']['status'] : value
+                [field]: field === 'status' ? value : field === 'error' ? value || null : value
             }
         };
         onChange?.(updatedData);
@@ -42,13 +42,35 @@ const AlertStatusNode = ({ data, onChange }: AlertStatusNodeProps) => {
             </div>
 
             <div className="grid gap-2">
-                <Label htmlFor="message">Mensagem</Label>
+                <Label htmlFor="error">Erro</Label>
                 <Input
-                    id="message"
+                    id="error"
                     type="text"
-                    value={data.alertStatus.message}
-                    onChange={(e) => updateField('message', e.target.value)}
-                    placeholder="Mensagem do status"
+                    value={data.alertStatus.error || ''}
+                    onChange={(e) => updateField('error', e.target.value)}
+                    placeholder="Mensagem de erro"
+                />
+            </div>
+
+            <div className="grid gap-2">
+                <Label htmlFor="response">Resposta</Label>
+                <Input
+                    id="response"
+                    type="text"
+                    value={data.alertStatus.response}
+                    onChange={(e) => updateField('response', e.target.value)}
+                    placeholder="Resposta do alerta"
+                />
+            </div>
+
+            <div className="grid gap-2">
+                <Label htmlFor="alertIdVariable">Variável do ID do Alerta</Label>
+                <Input
+                    id="alertIdVariable"
+                    type="text"
+                    value={data.alertStatus.alertIdVariable}
+                    onChange={(e) => updateField('alertIdVariable', e.target.value)}
+                    placeholder="Variável do ID do alerta"
                 />
             </div>
 

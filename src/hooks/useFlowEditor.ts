@@ -5,7 +5,8 @@ import debounce from 'lodash/debounce';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 export const useFlowEditor = (): FlowState & FlowActions & FlowHandlers => {
-    const initialNodes = loadNodesFromStorage() || convertSchemaToNodes();
+    const savedNodes = loadNodesFromStorage();
+    const initialNodes = savedNodes || convertSchemaToNodes();
     const [nodes, setNodes] = useState<FlowNode[]>(initialNodes);
     const [edges, setEdges] = useState<FlowEdge[]>(convertSchemaToEdges(initialNodes));
     const [selectedNode, setSelectedNode] = useState<FlowNode | null>(null);

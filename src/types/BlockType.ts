@@ -155,17 +155,26 @@ export interface TemplateBlock {
 
 export interface ScheduleAlertBlock {
     scheduleAlert: {
-        message: string;
-        schedule: {
+        alertId: string;
+        onError: string;
+        onSuccess: string;
+        externalId: string;
+        scheduleDate: {
             date: string;
             time: string;
+            format: string;
         };
+        beforeReminders: { hours: number }[];
+        companyIdVariable: string;
+        variablesVariable: { [key: string]: string };
     };
 }
 
 export interface AlertStatusBlock {
     alertStatus: {
-        status: "PENDING" | "COMPLETED" | "CANCELED";
-        message: string;
+        error: string | null;
+        status: string;
+        response: string;
+        alertIdVariable: string;
     };
 }
